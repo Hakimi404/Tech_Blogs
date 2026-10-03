@@ -131,8 +131,9 @@ summary:focus-visible {
 .dateline {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 4px 16px;
+  gap: 8px 16px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--rule);
   font-family: var(--font-mono-stack);
@@ -145,6 +146,117 @@ summary:focus-visible {
 .dateline-date {
   color: var(--ink);
   font-weight: 600;
+}
+
+@media (min-width: 900px) {
+  .dateline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  .controls {
+    justify-self: end;
+  }
+}
+
+/* Language switch + theme toggle */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lang-switch {
+  display: flex;
+  border: 1px solid var(--rule);
+}
+
+.lang-switch a {
+  padding: 3px 8px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.lang-switch a + a {
+  border-left: 1px solid var(--rule);
+}
+
+.lang-switch a:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.lang-switch a[aria-current] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.theme-toggle {
+  padding: 3px 9px;
+  border: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.theme-toggle:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.theme-toggle svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.theme-to-dark svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* The button offers the opposite of the current theme. */
+.theme-to-dark,
+.theme-to-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.theme-to-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-to-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-to-light {
+  display: inline-flex;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-to-dark {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .theme-to-light {
+    display: inline-flex;
+  }
 }
 
 .wordmark {

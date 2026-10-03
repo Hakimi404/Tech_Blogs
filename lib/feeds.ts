@@ -1,6 +1,7 @@
 import Parser from "rss-parser";
 import { site } from "./site";
-import { sections, sources, type Section, type SectionId, type Source } from "./sources";
+import type { Lang } from "./i18n";
+import { sectionIds, sourcesFor, type SectionId, type Source } from "./sources";
 
 export type Story = {
   id: string;
@@ -25,7 +26,7 @@ export type Cluster = {
   isDeal: boolean;
 };
 
-export type SectionEdition = { section: Section; clusters: Cluster[]; storyCount: number };
+export type SectionEdition = { id: SectionId; clusters: Cluster[]; storyCount: number };
 
 export type Edition = {
   generatedAt: string;
@@ -69,14 +70,15 @@ const parser: Parser<object, FeedItem> = new Parser({
 const HOUR = 3_600_000;
 
 const AI_PATTERN =
-  /\b(artificial intelligence|machine learning|deep learning|LLMs?|GPT-?\w*|ChatGPT|OpenAI|Anthropic|Claude|Gemini|DeepMind|Copilot|chatbots?|generative|Llama|Mistral|Grok|xAI|Perplexity|Midjourney|Sora|AGI|superintelligence|neural net\w*|foundation models?|large language models?)\b/i;
-const AI_ACRONYM = /\bA\.?I\b/; // case-sensitive so it doesn't match words like "ai" in other languages
+  /\b(artificial intelligence|machine learning|deep learning|LLMs?|GPT-?\w*|ChatGPT|OpenAI|Anthropic|Claude|Gemini|DeepMind|Copilot|chatbots?|generative|Llama|Mistral|Grok|xAI|Perplexity|Midjourney|Sora|AGI|superintelligence|neural net\w*|foundation models?|large language models?|künstliche Intelligenz|Sprachmodell\w*|maschinelles Lernen)\b/i;
+const AI_ACRONYM = /\b(A\.?I|KI)\b/; // case-sensitive: "AI" in English, "KI" in German
+// German terms included for the German edition. JS \b only knows ASCII letters, so no boundary sits next to an umlaut.
 const SECURITY_PATTERN =
-  /\b(ransomware|malware|spyware|botnet|phishing|zero-day|0-day|vulnerabilit(y|ies)|exploit(s|ed)?|CVE-\d+|data breach|breach(ed)?|hack(ed|ers?|ing)?|cyberattacks?|cybersecurity|infostealer|backdoor)\b/i;
+  /\b(ransomware|malware|spyware|botnet|phishing|zero-day|0-day|vulnerabilit(y|ies)|exploit(s|ed)?|CVE-\d+|data breach|breach(ed)?|hack(ed|ers?|ing)?|cyberattacks?|cybersecurity|infostealer|backdoor|Sicherheitslücke\w*|Lücke\w*|Schwachstelle\w*|Cyberangriff\w*|Hackerangriff\w*|Datenleck\w*|gehackt|Trojaner|Sicherheitsupdate\w*|Patchday)\b/i;
 // Affiliate coupon pages (e.g. "Nike Promo Codes: 30% Off") are not news and are dropped entirely.
-const JUNK_PATTERN = /\b(promo codes?|coupon codes?|coupons)\b/i;
+const JUNK_PATTERN = /\b(promo codes?|coupon codes?|coupons|Gutschein\w*)\b/i;
 const DEAL_PATTERN =
-  /\b(deals?|% off|save \$|discount(ed)?|coupons?|lowest price|on sale|Prime Day|Black Friday|Cyber Monday|promo codes?)\b/i;
+  /\b(deals?|% off|save \$|discount(ed)?|coupons?|lowest price|on sale|Prime Day|Black Friday|Cyber Monday|promo codes?|Angebot\w*|Blitzangebot\w*|Rabatt\w*|Schnäppchen|Tiefstpreis\w*|Bestpreis\w*|günstig wie nie|reduziert)\b/i;
 
 const STOPWORDS = new Set(
   (
@@ -84,7 +86,13 @@ const STOPWORDS = new Set(
     "it its this that these those their there they them he she his her you your we our us i me my not no yes new now just more most " +
     "than then so if how why what when where who whom which will would can could should may might must has have had do does did " +
     "says said say report reports reportedly launches launch launched announces announced update updates out up off its it's here " +
-    "first one two three get gets got make makes made via amid against all any some also still back week today day year years"
+    "first one two three get gets got make makes made via amid against all any some also still back week today day year years " +
+    // German
+    "der die das den dem des ein eine einen einem einer eines und oder aber für mit von vom zum zur bei nach über unter vor " +
+    "durch gegen ohne bis seit ist sind war waren wird werden wurde wurden hat haben hatte kann können soll sollen muss müssen " +
+    "will wollen nicht kein keine auch noch nur schon jetzt mehr neue neuer neues neuen ersten wie was wer wann warum sich sein " +
+    "seine ihre ihr sie wir man als dass heute alle alles diese dieser dieses gibt bringt macht kommt startet zeigt erhält " +
+    "rückt näher bald endlich offiziell"
   ).split(" "),
 );
 
@@ -116,8 +124,8 @@ function clean(text: string): string {
 function makeExcerpt(item: FeedItem, title: string): string {
   const raw = item.contentSnippet || item.summary || stripHtml(item.contentEncoded || item.content || "");
   let text = clean(decodeEntities(raw))
-    .replace(/The post .+? appeared first on .+?\.?$/i, "")
-    .replace(/\b(Continue reading|Read more|Read the full story)\b.*$/i, "")
+    .replace(/(The post .+? appeared first on|Der Beitrag .+? erschien zuerst auf) .+?\.?$/i, "")
+    .replace(/\b(Continue reading|Read more|Read the full story|Weiterlesen|Zum Artikel)\b.*$/i, "")
     .replace(/\[(…|\.\.\.|&#8230;)\]\s*$/, "")
     .trim();
   if (!text || text.toLowerCase().startsWith(title.toLowerCase().slice(0, 40))) {
@@ -239,7 +247,7 @@ function tokenize(title: string): string[] {
     .toLowerCase()
     .replace(/[’'`]s\b/g, "")
     .replace(/[’'`]/g, "")
-    .split(/[^a-z0-9.+#&]+/)
+    .split(/[^\p{L}\p{N}.+#&]+/u) // Unicode letters, so German words with umlauts stay whole
     .map((w) => w.replace(/^[.\-]+|[.\-]+$/g, ""))
     .filter((w) => (w.length > 2 || /\d/.test(w)) && !STOPWORDS.has(w))
     .map((w) => (w.length > 4 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
@@ -325,18 +333,21 @@ function toCluster(group: Story[], now: number): Cluster {
 // Short-lived memo so dev reloads and back-to-back regenerations don't refetch 40 feeds; far shorter than the
 // page's revalidate interval so it never holds an edition back.
 const MEMO_MS = 120_000;
-let memo: { at: number; edition: Promise<Edition> } | undefined;
+const memo = new Map<Lang, { at: number; edition: Promise<Edition> }>();
 
-export function getEdition(): Promise<Edition> {
-  if (memo && Date.now() - memo.at < MEMO_MS) return memo.edition;
-  const edition = buildEdition();
-  memo = { at: Date.now(), edition };
-  edition.catch(() => (memo = undefined));
+/** The edition for one language: the English edition reads English sources, the German edition German ones. */
+export function getEdition(lang: Lang): Promise<Edition> {
+  const cached = memo.get(lang);
+  if (cached && Date.now() - cached.at < MEMO_MS) return cached.edition;
+  const edition = buildEdition(lang);
+  memo.set(lang, { at: Date.now(), edition });
+  edition.catch(() => memo.delete(lang));
   return edition;
 }
 
-async function buildEdition(): Promise<Edition> {
+async function buildEdition(lang: Lang): Promise<Edition> {
   const now = Date.now();
+  const sources = sourcesFor(lang);
   const results = await Promise.allSettled(sources.map((s) => fetchSource(s, now)));
 
   const failed = new Set<string>();
@@ -363,11 +374,11 @@ async function buildEdition(): Promise<Edition> {
   return {
     generatedAt: new Date(now).toISOString(),
     frontPage,
-    sections: sections
-      .map((section) => {
-        const inSection = clusters.filter((c) => c.section === section.id);
+    sections: sectionIds
+      .map((id) => {
+        const inSection = clusters.filter((c) => c.section === id);
         return {
-          section,
+          id,
           clusters: inSection.filter((c) => !onFront.has(c.id)),
           storyCount: inSection.reduce((n, c) => n + 1 + c.related.length, 0),
         };
