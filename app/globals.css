@@ -927,11 +927,6 @@ article:hover .story-image img {
   color: var(--ink-2);
 }
 
-.footer-about a {
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 0.16em;
-}
 
 .footer-heading {
   font-family: var(--font-mono-stack);

@@ -56,7 +56,6 @@ export type Dictionary = {
   quietBody: string;
   footerAbout: (sources: number, hours: number) => string;
   refreshed: (minutes: number) => string;
-  sourceCode: string;
   unavailable: string;
   colophon: (year: number, author: string) => string;
   theme: { light: string; dark: string; toggle: string };
@@ -101,7 +100,6 @@ const en: Dictionary = {
   footerAbout: (sources, hours) =>
     `A daily front page of everything that happened in AI and technology over the last ${hours} hours, gathered from ${sources} newsrooms, research labs and engineering blogs. Stories reported by several outlets are grouped together and rise to the top.`,
   refreshed: (minutes) => `Refreshed every ${minutes} minutes.`,
-  sourceCode: "Source on GitHub",
   unavailable: "(unavailable)",
   colophon: (year, author) =>
     `© ${year} ${author}. Headlines and excerpts belong to their publishers — every story links to the original.`,
@@ -148,7 +146,6 @@ const de: Dictionary = {
   footerAbout: (sources, hours) =>
     `Eine tägliche Titelseite mit allem, was in den letzten ${hours} Stunden in KI und Technologie passiert ist – aus ${sources} Redaktionen, Forschungslaboren und Tech-Blogs. Meldungen, über die mehrere Medien berichten, werden gebündelt und rücken nach oben.`,
   refreshed: (minutes) => `Wird alle ${minutes} Minuten aktualisiert.`,
-  sourceCode: "Quellcode auf GitHub",
   unavailable: "(nicht erreichbar)",
   colophon: (year, author) =>
     `© ${year} ${author}. Schlagzeilen und Auszüge gehören den jeweiligen Verlagen – jede Meldung verlinkt auf das Original.`,

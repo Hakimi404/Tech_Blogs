@@ -186,10 +186,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
               <p className="footer-wordmark">{site.name}</p>
               <p>{t.footerAbout(publishers.length, site.windowHours)}</p>
               <p>
-                {t.compiledBy} <strong>{site.author}</strong>. {t.refreshed(site.refreshSeconds / 60)}{" "}
-                <a href={site.github} target="_blank" rel="noopener noreferrer">
-                  {t.sourceCode}
-                </a>
+                {t.compiledBy} <strong>{site.author}</strong>. {t.refreshed(site.refreshSeconds / 60)}
               </p>
             </div>
             <div>
