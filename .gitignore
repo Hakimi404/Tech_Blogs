@@ -40,5 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local Claude Code settings
+# local agent settings and instructions (next dev regenerates AGENTS.md and CLAUDE.md)
 /.claude/
+/AGENTS.md
+/CLAUDE.md
