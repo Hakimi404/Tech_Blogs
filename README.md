@@ -32,16 +32,11 @@ Next.js 16 (App Router, Incremental Static Regeneration), React 19, TypeScript, 
 ## Architecture
 
 ```mermaid
-flowchart LR
-    F[RSS and Atom feeds] -->|fetched in parallel| P[lib/feeds.ts]
-    P --> D[Filter to 24 hours and merge duplicates]
-    D --> C[Cluster headlines]
-    C --> R[Score and rank]
-    R --> E[Edition for one language]
-    E --> S["app/[lang]/page.tsx<br/>regenerated every 15 minutes"]
+flowchart TD
+    F[RSS and Atom feeds] -->|fetched in parallel| P["lib/feeds.ts<br/>filter to 24 hours, merge duplicates,<br/>cluster headlines, score and rank"]
+    P --> S["app/[lang]/page.tsx<br/>regenerated every 15 minutes"]
     S --> B[Reader]
-    B -->|"/ redirect by cookie or browser language"| X[proxy.ts]
-    X --> S
+    X["proxy.ts<br/>redirects / by cookie or browser language"] --> S
 ```
 
 | File | Purpose |
